@@ -16,6 +16,9 @@ public class MyTankGame extends JFrame {
 
     public MyTankGame() throws HeadlessException {
         myPanel = new MyPanel();
+        // 启动myPanel线程
+        Thread t = new Thread(myPanel);
+        t.start();
         this.add(myPanel);
 
         // 注册监听
@@ -29,9 +32,11 @@ public class MyTankGame extends JFrame {
     }
 }
 
-class MyPanel extends JPanel implements KeyListener {
+class MyPanel extends JPanel implements KeyListener, Runnable {
     // 我的坦克
     MyTank myTank = null;
+    // 我的子弹
+    Vector<Buller> myBullers = null;
     // 敌人的坦克
     Vector<EnemyTank> ets = null;
     // 敌人坦克数量
@@ -41,6 +46,8 @@ class MyPanel extends JPanel implements KeyListener {
         this.setBackground(Color.black);
         // 初始化我的坦克
         myTank = new MyTank(180, 220);
+        // 初始化我的子弹
+        myBullers = new Vector<Buller>();
         // 初始化敌人的坦克
         ets = new Vector<EnemyTank>();
         for (int i = 0; i < etsSize; i++) {
@@ -55,9 +62,19 @@ class MyPanel extends JPanel implements KeyListener {
         super.paint(g);
         // 绘制我的坦克
         drawTank(myTank.x, myTank.y, myTank.direct, myTank.kind, g);
+        // 绘制我的子弹
+        for (int i = 0; i < myBullers.size(); i++) {
+            Buller myBuller = myBullers.get(i);
+            if (myBuller.isAlive) {
+                // 子弹还活着就绘制
+                g.drawRect(myBuller.x, myBuller.y, 1, 1);
+            } else {
+                // 子弹死亡了 就从子弹向量移除
+                myBullers.remove(myBuller);
+            }
+        }
         // 绘制敌人的坦克
         for (int i = 0; i < ets.size(); i++) {
-            System.out.println("111");
             EnemyTank et = ets.get(i);
             drawTank(et.x, et.y, et.direct, et.kind, g);
         }
@@ -115,6 +132,32 @@ class MyPanel extends JPanel implements KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
+        // 通过按j键 我的坦克发射子弹
+        if (e.getKeyChar() == 'j') {
+            // 发射子弹
+            System.out.println("发射子弹");
+            // 创建我的子弹
+            Buller myBuller = null;
+            switch (myTank.direct) {
+                case 0:
+                    myBuller = new Buller(myTank.x + 10, myTank.y, myTank.direct);
+                    break;
+                case 1:
+                    myBuller = new Buller(myTank.x + 20, myTank.y + 10, myTank.direct);
+                    break;
+                case 2:
+                    myBuller = new Buller(myTank.x + 10, myTank.y + 20, myTank.direct);
+                    break;
+                case 3:
+                    myBuller = new Buller(myTank.x, myTank.y + 10, myTank.direct);
+                    break;
+            }
+            Thread t1 = new Thread(myBuller);
+            t1.start();
+            myBullers.add(myBuller);
+        }
+
+        // 通过按方向键移动坦克
         switch (e.getKeyCode()) {
             case 38:
                 // 设置我的坦克方向向上
@@ -143,6 +186,22 @@ class MyPanel extends JPanel implements KeyListener {
     public void keyReleased(KeyEvent e) {
 
     }
+
+    @Override
+    public void run() {
+        while (true) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            this.repaint();
+            // 退出线程条件 我的坦克死亡 游戏结束
+            if (!myTank.isAlive) {
+                break;
+            }
+        }
+    }
 }
 
 class Tank {
@@ -151,6 +210,7 @@ class Tank {
     int direct = 0; // 0123 代表 上右下左
     int speed = 1;
     int kind = 0; //0-我的坦克 1-敌方坦克
+    boolean isAlive = true;
 
     public Tank(int x, int y) {
         this.x = x;
@@ -172,5 +232,63 @@ class EnemyTank extends Tank {
         super(x, y);
         this.direct = 2;
         this.kind = 1;
+    }
+}
+
+class Buller implements Runnable {
+    int x;
+    int y;
+    int direct;
+    int speed = 1;
+    boolean isAlive = true;
+
+    public Buller(int x, int y, int direct) {
+        this.x = x;
+        this.y = y;
+        this.direct = direct;
+    }
+
+    @Override
+    public void run() {
+        while (true) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            switch (direct) {
+                case 0:
+                    if (y > 0) {
+                        y -= speed;
+                    }
+                    break;
+                case 1:
+                    if (x < 400) {
+                        x += speed;
+                    }
+                    break;
+                case 2:
+                    if (y < 300) {
+                        y += speed;
+                    }
+                    break;
+                case 3:
+                    if (x > 0) {
+                        x -= speed;
+                    }
+                    break;
+            }
+//            System.out.println("子弹x= " + this.x + "子弹y= " + this.y);
+
+            // 判断子弹是否碰壁
+            if (this.x == 0 || this.x == 400 || this.y == 0 || this.y == 300) {
+                this.isAlive = false;
+            }
+
+            // 子弹消失条件判断 终止线程
+            if (!this.isAlive) {
+                break;
+            }
+        }
     }
 }
