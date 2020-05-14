@@ -52,6 +52,8 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
         ets = new Vector<EnemyTank>();
         for (int i = 0; i < etsSize; i++) {
             EnemyTank et = new EnemyTank((i + 1) * 50, 10);
+            Thread t = new Thread(et);
+            t.start();
             ets.add(et);
         }
 
@@ -76,6 +78,18 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
         // 绘制敌人的坦克
         for (int i = 0; i < ets.size(); i++) {
             EnemyTank et = ets.get(i);
+            // 绘制敌人坦克的子弹
+            for (int j = 0; j < et.bullers.size(); j++) {
+                Buller etBuller = et.bullers.get(j);
+                if (etBuller.isAlive) {
+                    // 子弹还活着就绘制
+                    g.setColor(Color.yellow);
+                    g.drawRect(etBuller.x, etBuller.y, 1, 1);
+                } else {
+                    // 子弹死亡了 就从子弹向量移除
+                    et.bullers.remove(etBuller);
+                }
+            }
             drawTank(et.x, et.y, et.direct, et.kind, g);
         }
     }
@@ -235,11 +249,99 @@ class MyTank extends Tank {
     }
 }
 
-class EnemyTank extends Tank {
+class EnemyTank extends Tank implements Runnable {
+    Vector<Buller> bullers = null;
+
     public EnemyTank(int x, int y) {
         super(x, y);
         this.direct = 2;
         this.kind = 1;
+        this.bullers = new Vector<Buller>();
+    }
+
+    @Override
+    public void run() {
+        while (true) {
+
+
+            // 移动坦克
+            switch (direct) {
+                case 0:
+                    for (int i = 0; i < 10; i++) {
+                        if (y > 0) {
+                            y -= speed;
+                        }
+                        try {
+                            Thread.sleep(this.getRandomInt(100, 200));
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
+                case 1:
+                    for (int i = 0; i < 10; i++) {
+                        if (x < 400) {
+                            x += speed;
+                        }
+                        try {
+                            Thread.sleep(this.getRandomInt(100, 200));
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
+                case 2:
+                    for (int i = 0; i < 10; i++) {
+                        if (y < 300) {
+                            y += speed;
+                        }
+                        try {
+                            Thread.sleep(this.getRandomInt(100, 200));
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
+                case 3:
+                    for (int i = 0; i < 10; i++) {
+                        if (x > 0) {
+                            x -= speed;
+                        }
+                        try {
+                            Thread.sleep(this.getRandomInt(100, 200));
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
+            }
+
+
+            // 随机一个方向 让坦克转向
+            this.direct = getRandomInt(0, 4);
+            // 敌人坦克创建后 紧接创建该坦克的子弹
+            if (bullers.size() < 3) {
+                Buller buller = new Buller(this.x + 10, this.y, this.direct);
+                Thread t2 = new Thread(buller);
+                t2.start();
+                this.bullers.add(buller);
+            }
+            // 退出线程条件 坦克死亡
+            if (!isAlive) {
+                break;
+            }
+        }
+    }
+
+    /**
+     * 得到一个区间 [min,max) 内的随机整数
+     *
+     * @param min int 最小值
+     * @param max int 最大值
+     * @return int 随机结果
+     */
+    private int getRandomInt(int min, int max) {
+        return (int) (Math.random() * (max - min) + min);
     }
 }
 
@@ -247,7 +349,7 @@ class Buller implements Runnable {
     int x;
     int y;
     int direct;
-    int speed = 1;
+    int speed = 2;
     boolean isAlive = true;
 
     public Buller(int x, int y, int direct) {
