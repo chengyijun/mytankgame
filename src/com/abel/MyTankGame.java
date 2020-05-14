@@ -163,19 +163,27 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
                 // 设置我的坦克方向向上
                 myTank.direct = 0;
                 // 移动坦克
-                myTank.y--;
+                if (myTank.y > 0) {
+                    myTank.y--;
+                }
                 break;
             case 39:
                 myTank.direct = 1;
-                myTank.x++;
+                if (myTank.x < 360) {
+                    myTank.x++;
+                }
                 break;
             case 40:
                 myTank.direct = 2;
-                myTank.y++;
+                if (myTank.y < 240) {
+                    myTank.y++;
+                }
                 break;
             case 37:
                 myTank.direct = 3;
-                myTank.x--;
+                if (myTank.x > 0) {
+                    myTank.x--;
+                }
                 break;
         }
         // 重绘
