@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.Vector;
 
 public class MyTankGame extends JFrame {
     MyPanel myPanel = null;
@@ -31,19 +32,44 @@ public class MyTankGame extends JFrame {
 class MyPanel extends JPanel implements KeyListener {
     // 我的坦克
     MyTank myTank = null;
+    // 敌人的坦克
+    Vector<EnemyTank> ets = null;
+    // 敌人坦克数量
+    int etsSize = 5;
 
     public MyPanel() {
         this.setBackground(Color.black);
+        // 初始化我的坦克
         myTank = new MyTank(180, 220);
+        // 初始化敌人的坦克
+        ets = new Vector<EnemyTank>();
+        for (int i = 0; i < etsSize; i++) {
+            EnemyTank et = new EnemyTank((i + 1) * 50, 10);
+            ets.add(et);
+        }
 
     }
 
     @Override
     public void paint(Graphics g) {
         super.paint(g);
+        // 绘制我的坦克
         drawTank(myTank.x, myTank.y, myTank.direct, myTank.kind, g);
+        // 绘制敌人的坦克
+        for (int i = 0; i < ets.size(); i++) {
+            System.out.println("111");
+            EnemyTank et = ets.get(i);
+            drawTank(et.x, et.y, et.direct, et.kind, g);
+        }
     }
 
+    /**
+     * @param x      int 坦克横坐标
+     * @param y      int 坦克纵坐标
+     * @param direct int 坦克的方向
+     * @param kind   int 坦克的类型
+     * @param g      Graphics 画笔
+     */
     private void drawTank(int x, int y, int direct, int kind, Graphics g) {
         switch (kind) {
             case 0:
@@ -138,5 +164,13 @@ class MyTank extends Tank {
         this.direct = 0;
         this.kind = 0;
 
+    }
+}
+
+class EnemyTank extends Tank {
+    public EnemyTank(int x, int y) {
+        super(x, y);
+        this.direct = 2;
+        this.kind = 1;
     }
 }
