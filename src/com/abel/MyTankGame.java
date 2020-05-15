@@ -1,13 +1,16 @@
 package com.abel;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.File;
+import java.io.IOException;
 import java.util.Vector;
 
 class GameConfig {
-    static int BullerSpeed = 2;
+    static int BullerSpeed = 5;
     static int MyTankSpeed = 2;
     static int MyTankBullerNumber = 5;
     static int EnemyTankNumber = 5;
@@ -47,6 +50,8 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
     Vector<EnemyTank> ets = null;
     // 敌人坦克数量
     int etsSize = GameConfig.EnemyTankNumber;
+    // 炸弹
+    Bomb bomb = null;
 
     public MyPanel() {
         this.setBackground(Color.black);
@@ -102,6 +107,37 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
             } else {
                 ets.remove(et);
             }
+        }
+
+        // 绘制炸弹
+        showBomb(g, bomb);
+
+    }
+
+    private void showBomb(Graphics g, Bomb bomb) {
+        if (bomb == null || !bomb.isAlive) {
+            return;
+        }
+        File file1 = new File("1.png");
+        File file2 = new File("2.png");
+        File file3 = new File("3.png");
+        Image image1 = null;
+        Image image2 = null;
+        Image image3 = null;
+        try {
+            image1 = ImageIO.read(file1);
+            image2 = ImageIO.read(file2);
+            image3 = ImageIO.read(file3);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (bomb.leftLife > 6) {
+            g.drawImage(image1, bomb.x, bomb.y, this);
+        } else if (bomb.leftLife > 3) {
+            g.drawImage(image2, bomb.x, bomb.y, this);
+        } else {
+            g.drawImage(image3, bomb.x, bomb.y, this);
         }
     }
 
@@ -241,6 +277,7 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
             }
             // 检测我的坦克子弹是否击中敌人的坦克
             hitEnemyTank();
+
             // 持续重绘面板 使敌人坦克和子弹运动起来
             this.repaint();
             // 退出线程条件 我的坦克死亡 游戏结束
@@ -249,6 +286,7 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
             }
         }
     }
+
 
     private void hitEnemyTank() {
         for (int i = 0; i < myBullers.size(); i++) {
@@ -260,6 +298,10 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
                     buller.isAlive = false;
                     // 敌方坦克死亡
                     et.isAlive = false;
+                    // 生成炸弹
+                    bomb = new Bomb(et.x, et.y);
+                    Thread t = new Thread(bomb);
+                    t.start();
                 }
             }
         }
@@ -464,6 +506,47 @@ class Buller implements Runnable {
                     x -= speed;
                 }
                 break;
+        }
+    }
+}
+
+class Bomb implements Runnable {
+    int leftLife = 9;
+    int x;
+    int y;
+    boolean isAlive = true;
+
+    public Bomb(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+
+    @Override
+    public void run() {
+        while (true) {
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            // 炸弹生命流失 便于绘制不同图片 表示炸弹爆炸过程
+            lifeDown();
+            System.out.println("炸弹剩余生命" + leftLife);
+
+            // 退出线程条件  炸弹死亡
+            if (!isAlive) {
+                break;
+            }
+        }
+
+    }
+
+    private void lifeDown() {
+        if (leftLife > 0) {
+            leftLife--;
+        } else {
+            isAlive = false;
         }
     }
 }
