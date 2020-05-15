@@ -6,6 +6,17 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Vector;
 
+class GameConfig {
+    static int BullerSpeed = 2;
+
+    static int MyTankSpeed = 2;
+    static int MyTankBullerNumber = 5;
+
+    static int EnemyTankNumber = 5;
+    static int EnemyTankSpeed = 1;
+    static int EnemyTankBullerNumber = 3;
+}
+
 public class MyTankGame extends JFrame {
     MyPanel myPanel = null;
 
@@ -40,7 +51,7 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
     // 敌人的坦克
     Vector<EnemyTank> ets = null;
     // 敌人坦克数量
-    int etsSize = 1;
+    int etsSize = GameConfig.EnemyTankNumber;
 
     public MyPanel() {
         this.setBackground(Color.black);
@@ -147,7 +158,7 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
     @Override
     public void keyPressed(KeyEvent e) {
         // 通过按j键 我的坦克发射子弹
-        if (e.getKeyChar() == 'j') {
+        if (e.getKeyChar() == 'j' && myBullers.size() < GameConfig.MyTankBullerNumber) {
             // 发射子弹
             System.out.println("发射子弹");
             // 创建我的子弹
@@ -245,6 +256,7 @@ class MyTank extends Tank {
         super(x, y);
         this.direct = 0;
         this.kind = 0;
+        this.speed = GameConfig.MyTankSpeed;
 
     }
 }
@@ -257,6 +269,7 @@ class EnemyTank extends Tank implements Runnable {
         this.direct = 2;
         this.kind = 1;
         this.bullers = new Vector<Buller>();
+        this.speed = GameConfig.EnemyTankSpeed;
     }
 
     @Override
@@ -320,7 +333,7 @@ class EnemyTank extends Tank implements Runnable {
             // 随机一个方向 让坦克转向
             this.direct = getRandomInt(0, 4);
             // 敌人坦克创建后 紧接创建该坦克的子弹
-            if (bullers.size() < 5) {
+            if (bullers.size() < GameConfig.EnemyTankBullerNumber) {
                 Buller buller = null;
                 switch (direct) {
                     case 0:
@@ -363,7 +376,7 @@ class Buller implements Runnable {
     int x;
     int y;
     int direct;
-    int speed = 2;
+    int speed = GameConfig.BullerSpeed;
     boolean isAlive = true;
 
     public Buller(int x, int y, int direct) {
