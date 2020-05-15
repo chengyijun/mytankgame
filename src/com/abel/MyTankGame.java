@@ -8,10 +8,8 @@ import java.util.Vector;
 
 class GameConfig {
     static int BullerSpeed = 2;
-
     static int MyTankSpeed = 2;
     static int MyTankBullerNumber = 5;
-
     static int EnemyTankNumber = 5;
     static int EnemyTankSpeed = 1;
     static int EnemyTankBullerNumber = 3;
@@ -19,7 +17,6 @@ class GameConfig {
 
 public class MyTankGame extends JFrame {
     MyPanel myPanel = null;
-
 
     public static void main(String[] args) {
         MyTankGame myTankGame = new MyTankGame();
@@ -31,10 +28,8 @@ public class MyTankGame extends JFrame {
         Thread t = new Thread(myPanel);
         t.start();
         this.add(myPanel);
-
         // 注册监听
         this.addKeyListener(myPanel);
-
         this.setTitle("我的坦克大战游戏");
         this.setSize(400, 300);
         this.setLocation(700, 400);
@@ -67,14 +62,15 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
             t.start();
             ets.add(et);
         }
-
     }
 
     @Override
     public void paint(Graphics g) {
         super.paint(g);
         // 绘制我的坦克
-        drawTank(myTank.x, myTank.y, myTank.direct, myTank.kind, g);
+        if (myTank.isAlive) {
+            drawTank(myTank.x, myTank.y, myTank.direct, myTank.kind, g);
+        }
         // 绘制我的子弹
         for (int i = 0; i < myBullers.size(); i++) {
             Buller myBuller = myBullers.get(i);
@@ -89,19 +85,23 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
         // 绘制敌人的坦克
         for (int i = 0; i < ets.size(); i++) {
             EnemyTank et = ets.get(i);
-            // 绘制敌人坦克的子弹
-            for (int j = 0; j < et.bullers.size(); j++) {
-                Buller etBuller = et.bullers.get(j);
-                if (etBuller.isAlive) {
-                    // 子弹还活着就绘制
-                    g.setColor(Color.yellow);
-                    g.drawRect(etBuller.x, etBuller.y, 1, 1);
-                } else {
-                    // 子弹死亡了 就从子弹向量移除
-                    et.bullers.remove(etBuller);
+            if (et.isAlive) {
+                // 绘制敌人坦克的子弹
+                for (int j = 0; j < et.bullers.size(); j++) {
+                    Buller etBuller = et.bullers.get(j);
+                    if (etBuller.isAlive) {
+                        // 子弹还活着就绘制
+                        g.setColor(Color.yellow);
+                        g.drawRect(etBuller.x, etBuller.y, 1, 1);
+                    } else {
+                        // 子弹死亡了 就从子弹向量移除
+                        et.bullers.remove(etBuller);
+                    }
                 }
+                drawTank(et.x, et.y, et.direct, et.kind, g);
+            } else {
+                ets.remove(et);
             }
-            drawTank(et.x, et.y, et.direct, et.kind, g);
         }
     }
 
@@ -147,12 +147,10 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
                 g.drawLine(x + 10, y + 10, x, y + 10);
                 break;
         }
-
     }
 
     @Override
     public void keyTyped(KeyEvent e) {
-
     }
 
     @Override
@@ -181,7 +179,6 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
             t1.start();
             myBullers.add(myBuller);
         }
-
         // 通过按方向键移动坦克
         switch (e.getKeyCode()) {
             case 38:
@@ -217,7 +214,21 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
 
     @Override
     public void keyReleased(KeyEvent e) {
+    }
 
+    /**
+     * 检测子弹是否击中坦克
+     *
+     * @param buller
+     * @param tank
+     * @return
+     */
+    private boolean isShot(Buller buller, Tank tank) {
+        boolean flag = false;
+        if (buller.x > tank.x && buller.x < tank.x + 20 && buller.y > tank.y && buller.y < tank.y + 20) {
+            flag = true;
+        }
+        return flag;
     }
 
     @Override
@@ -228,10 +239,28 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            // 检测我的坦克子弹是否击中敌人的坦克
+            hitEnemyTank();
+            // 持续重绘面板 使敌人坦克和子弹运动起来
             this.repaint();
             // 退出线程条件 我的坦克死亡 游戏结束
             if (!myTank.isAlive) {
                 break;
+            }
+        }
+    }
+
+    private void hitEnemyTank() {
+        for (int i = 0; i < myBullers.size(); i++) {
+            Buller buller = myBullers.get(i);
+            for (int j = 0; j < ets.size(); j++) {
+                EnemyTank et = ets.get(j);
+                if (this.isShot(buller, et)) {
+                    // 我的子弹死亡
+                    buller.isAlive = false;
+                    // 敌方坦克死亡
+                    et.isAlive = false;
+                }
             }
         }
     }
@@ -257,7 +286,6 @@ class MyTank extends Tank {
         this.direct = 0;
         this.kind = 0;
         this.speed = GameConfig.MyTankSpeed;
-
     }
 }
 
@@ -275,88 +303,92 @@ class EnemyTank extends Tank implements Runnable {
     @Override
     public void run() {
         while (true) {
-
-
             // 移动坦克
-            switch (direct) {
-                case 0:
-                    for (int i = 0; i < 10; i++) {
-                        if (y > 0) {
-                            y -= speed;
-                        }
-                        try {
-                            Thread.sleep(this.getRandomInt(100, 200));
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 1:
-                    for (int i = 0; i < 10; i++) {
-                        if (x < 400) {
-                            x += speed;
-                        }
-                        try {
-                            Thread.sleep(this.getRandomInt(100, 200));
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 2:
-                    for (int i = 0; i < 10; i++) {
-                        if (y < 300) {
-                            y += speed;
-                        }
-                        try {
-                            Thread.sleep(this.getRandomInt(100, 200));
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 3:
-                    for (int i = 0; i < 10; i++) {
-                        if (x > 0) {
-                            x -= speed;
-                        }
-                        try {
-                            Thread.sleep(this.getRandomInt(100, 200));
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-            }
-
-
+            moveTank();
             // 随机一个方向 让坦克转向
             this.direct = getRandomInt(0, 4);
             // 敌人坦克创建后 紧接创建该坦克的子弹
-            if (bullers.size() < GameConfig.EnemyTankBullerNumber) {
-                Buller buller = null;
-                switch (direct) {
-                    case 0:
-                        buller = new Buller(this.x + 10, this.y, this.direct);
-                        break;
-                    case 1:
-                        buller = new Buller(this.x + 20, this.y + 10, this.direct);
-                        break;
-                    case 2:
-                        buller = new Buller(this.x + 10, this.y + 20, this.direct);
-                        break;
-                    case 3:
-                        buller = new Buller(this.x, this.y + 10, this.direct);
-                        break;
-                }
-                Thread t2 = new Thread(buller);
-                t2.start();
-                this.bullers.add(buller);
-            }
+            launchBuller();
             // 退出线程条件 坦克死亡
             if (!isAlive) {
                 break;
             }
+        }
+    }
+
+    private void launchBuller() {
+        if (bullers.size() < GameConfig.EnemyTankBullerNumber) {
+            Buller buller = null;
+            switch (direct) {
+                case 0:
+                    buller = new Buller(this.x + 10, this.y, this.direct);
+                    break;
+                case 1:
+                    buller = new Buller(this.x + 20, this.y + 10, this.direct);
+                    break;
+                case 2:
+                    buller = new Buller(this.x + 10, this.y + 20, this.direct);
+                    break;
+                case 3:
+                    buller = new Buller(this.x, this.y + 10, this.direct);
+                    break;
+            }
+            Thread t2 = new Thread(buller);
+            t2.start();
+            this.bullers.add(buller);
+        }
+    }
+
+    private void moveTank() {
+        switch (direct) {
+            case 0:
+                for (int i = 0; i < 10; i++) {
+                    if (y > 0) {
+                        y -= speed;
+                    }
+                    try {
+                        Thread.sleep(this.getRandomInt(100, 200));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                break;
+            case 1:
+                for (int i = 0; i < 10; i++) {
+                    if (x < 400) {
+                        x += speed;
+                    }
+                    try {
+                        Thread.sleep(this.getRandomInt(100, 200));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                break;
+            case 2:
+                for (int i = 0; i < 10; i++) {
+                    if (y < 300) {
+                        y += speed;
+                    }
+                    try {
+                        Thread.sleep(this.getRandomInt(100, 200));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                break;
+            case 3:
+                for (int i = 0; i < 10; i++) {
+                    if (x > 0) {
+                        x -= speed;
+                    }
+                    try {
+                        Thread.sleep(this.getRandomInt(100, 200));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                break;
         }
     }
 
@@ -393,39 +425,45 @@ class Buller implements Runnable {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            switch (direct) {
-                case 0:
-                    if (y > 0) {
-                        y -= speed;
-                    }
-                    break;
-                case 1:
-                    if (x < 400) {
-                        x += speed;
-                    }
-                    break;
-                case 2:
-                    if (y < 300) {
-                        y += speed;
-                    }
-                    break;
-                case 3:
-                    if (x > 0) {
-                        x -= speed;
-                    }
-                    break;
-            }
-//            System.out.println("子弹x= " + this.x + "子弹y= " + this.y);
-
+            // 移动子弹
+            moveBuller();
             // 判断子弹是否碰壁
-            if (this.x == 0 || this.x == 400 || this.y == 0 || this.y == 300) {
-                this.isAlive = false;
-            }
-
+            isBullerHitBorder();
             // 子弹消失条件判断 终止线程
             if (!this.isAlive) {
                 break;
             }
+        }
+    }
+
+    private void isBullerHitBorder() {
+        if (this.x == 0 || this.x == 400 || this.y == 0 || this.y == 300) {
+            this.isAlive = false;
+        }
+    }
+
+    private void moveBuller() {
+        switch (direct) {
+            case 0:
+                if (y > 0) {
+                    y -= speed;
+                }
+                break;
+            case 1:
+                if (x < 400) {
+                    x += speed;
+                }
+                break;
+            case 2:
+                if (y < 300) {
+                    y += speed;
+                }
+                break;
+            case 3:
+                if (x > 0) {
+                    x -= speed;
+                }
+                break;
         }
     }
 }
