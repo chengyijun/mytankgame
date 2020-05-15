@@ -40,7 +40,7 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
     // 敌人的坦克
     Vector<EnemyTank> ets = null;
     // 敌人坦克数量
-    int etsSize = 5;
+    int etsSize = 1;
 
     public MyPanel() {
         this.setBackground(Color.black);
@@ -320,8 +320,22 @@ class EnemyTank extends Tank implements Runnable {
             // 随机一个方向 让坦克转向
             this.direct = getRandomInt(0, 4);
             // 敌人坦克创建后 紧接创建该坦克的子弹
-            if (bullers.size() < 3) {
-                Buller buller = new Buller(this.x + 10, this.y, this.direct);
+            if (bullers.size() < 5) {
+                Buller buller = null;
+                switch (direct) {
+                    case 0:
+                        buller = new Buller(this.x + 10, this.y, this.direct);
+                        break;
+                    case 1:
+                        buller = new Buller(this.x + 20, this.y + 10, this.direct);
+                        break;
+                    case 2:
+                        buller = new Buller(this.x + 10, this.y + 20, this.direct);
+                        break;
+                    case 3:
+                        buller = new Buller(this.x, this.y + 10, this.direct);
+                        break;
+                }
                 Thread t2 = new Thread(buller);
                 t2.start();
                 this.bullers.add(buller);
