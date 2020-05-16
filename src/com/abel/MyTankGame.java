@@ -496,7 +496,7 @@ class Buller implements Runnable {
     }
 
     private void isBullerHitBorder() {
-        if (this.x < 0 || this.x > 400 || this.y < 0 || this.y > 300) {
+        if (this.x <= 0 || this.x >= 400 || this.y <= 0 || this.y >= 300) {
             this.isAlive = false;
         }
     }
