@@ -227,6 +227,12 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
             myBullers.add(myBuller);
         }
         // 通过按方向键移动坦克
+        moveMyTankByPress(e);
+        // 重绘
+        this.repaint();
+    }
+
+    private void moveMyTankByPress(KeyEvent e) {
         switch (e.getKeyCode()) {
             case 38:
                 // 设置我的坦克方向向上
@@ -255,8 +261,6 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
                 }
                 break;
         }
-        // 重绘
-        this.repaint();
     }
 
     @Override
@@ -307,8 +311,10 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
                 if (this.isShot(buller, et)) {
                     // 我的子弹死亡
                     buller.isAlive = false;
+                    myBullers.remove(buller);
                     // 敌方坦克死亡
                     et.isAlive = false;
+                    ets.remove(et);
                     // 生成炸弹
                     bomb = new Bomb(et.x, et.y);
                     Thread t = new Thread(bomb);
@@ -490,7 +496,7 @@ class Buller implements Runnable {
     }
 
     private void isBullerHitBorder() {
-        if (this.x == 0 || this.x == 400 || this.y == 0 || this.y == 300) {
+        if (this.x < 0 || this.x > 400 || this.y < 0 || this.y > 300) {
             this.isAlive = false;
         }
     }
