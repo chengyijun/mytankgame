@@ -40,6 +40,26 @@ class GameConfig {
     static int EnemyTankNumber = 10;
     static int EnemyTankSpeed = 1;
     static int EnemyTankBullerNumber = 3;
+
+    static boolean isEnemyTankGetRandomDirect = true;
+
+    public static void setIsEnemyTankGetRandomDirect(boolean isEnemyTankGetRandomDirect) {
+        GameConfig.isEnemyTankGetRandomDirect = isEnemyTankGetRandomDirect;
+    }
+
+
+    public static void setBullerSpeed(int bullerSpeed) {
+        BullerSpeed = bullerSpeed;
+    }
+
+    public static void setMyTankSpeed(int myTankSpeed) {
+        MyTankSpeed = myTankSpeed;
+    }
+
+    public static void setEnemyTankSpeed(int enemyTankSpeed) {
+        EnemyTankSpeed = enemyTankSpeed;
+    }
+
 }
 
 public class MyTankGame extends JFrame implements ActionListener {
@@ -54,6 +74,7 @@ public class MyTankGame extends JFrame implements ActionListener {
     // 菜单项
     JMenuItem jMenuItemExit = null;
     JMenuItem jMenuItemNewGame = null;
+    JMenuItem jMenuItemPauseGame = null;
 
 
     public static void main(String[] args) {
@@ -65,10 +86,12 @@ public class MyTankGame extends JFrame implements ActionListener {
         // 创建菜单
         jMenuBar = new JMenuBar();
         jMenu = new JMenu("游戏");
-        jMenuItemExit = new JMenuItem("退出");
         jMenuItemNewGame = new JMenuItem("新游戏");
+        jMenuItemPauseGame = new JMenuItem("暂停游戏");
+        jMenuItemExit = new JMenuItem("退出");
         jMenuBar.add(jMenu);
         jMenu.add(jMenuItemNewGame);
+        jMenu.add(jMenuItemPauseGame);
         jMenu.add(jMenuItemExit);
         this.setJMenuBar(jMenuBar);
         // 菜单监听
@@ -76,6 +99,8 @@ public class MyTankGame extends JFrame implements ActionListener {
         jMenuItemExit.setActionCommand("exit");
         jMenuItemNewGame.addActionListener(this);
         jMenuItemNewGame.setActionCommand("newgame");
+        jMenuItemPauseGame.addActionListener(this);
+        jMenuItemPauseGame.setActionCommand("pausegame");
 
 
         // 创建关卡信息面板
@@ -131,6 +156,13 @@ public class MyTankGame extends JFrame implements ActionListener {
             case "newgame":
                 System.out.println("newgame");
                 createGamePanel();
+                break;
+            case "pausegame":
+                System.out.println("pausegame");
+                GameConfig.setBullerSpeed(0);
+                GameConfig.setEnemyTankSpeed(0);
+                GameConfig.setMyTankSpeed(0);
+                GameConfig.setIsEnemyTankGetRandomDirect(false);
                 break;
         }
     }
@@ -541,13 +573,19 @@ class EnemyTank extends Tank implements Runnable {
             // 移动坦克
             moveTank();
             // 随机一个方向 让坦克转向
-            this.direct = getRandomInt(0, 4);
+            setEnemyTankRandomDirect();
             // 敌人坦克创建后 紧接创建该坦克的子弹
             launchBuller();
             // 退出线程条件 坦克死亡
             if (!isAlive) {
                 break;
             }
+        }
+    }
+
+    private void setEnemyTankRandomDirect() {
+        if (GameConfig.isEnemyTankGetRandomDirect) {
+            this.direct = getRandomInt(0, 4);
         }
     }
 
@@ -581,6 +619,8 @@ class EnemyTank extends Tank implements Runnable {
      * 自动移动敌人的坦克
      */
     private void moveTank() {
+        if (GameConfig.EnemyTankSpeed == 0)
+            return;
         switch (direct) {
             case 0:
                 for (int i = 0; i < 30; i++) {
@@ -702,6 +742,9 @@ class Buller implements Runnable {
      * 使子弹自动移动
      */
     private void moveBuller() {
+        if (GameConfig.BullerSpeed == 0) {
+            return;
+        }
         switch (direct) {
             case 0:
                 if (y > 0) {
