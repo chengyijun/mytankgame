@@ -66,6 +66,7 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
             Thread t = new Thread(et);
             t.start();
             ets.add(et);
+            et.setEts(ets);
         }
     }
 
@@ -350,6 +351,46 @@ class MyTank extends Tank {
 
 class EnemyTank extends Tank implements Runnable {
     Vector<Buller> bullers = null;
+    Vector<EnemyTank> ets = null;
+
+    public void setEts(Vector<EnemyTank> ets) {
+        this.ets = ets;
+    }
+
+    private boolean isEnemyTanksTouch() {
+        boolean flag = false;
+
+        for (int i = 0; i < ets.size(); i++) {
+            EnemyTank et = ets.get(i);
+            if (et != this && et.isAlive) {
+                if (isTouch(this, et)) {
+                    flag = true;
+                    break;
+                }
+            }
+        }
+
+        return flag;
+    }
+
+    /**
+     * 两个坦克是否碰撞检测
+     *
+     * @param tankA
+     * @param tankB
+     * @return
+     */
+    private boolean isTouch(Tank tankA, Tank tankB) {
+        boolean flag = false;
+        Rectangle rectA = new Rectangle(tankA.x, tankA.y, 20, 20);
+        Rectangle rectB = new Rectangle(tankB.x, tankB.y, 20, 20);
+        if (rectA.intersects(rectB)) {
+            flag = true;
+            System.out.println("碰到了");
+//            tankA.direct = 3 - tankA.direct;
+        }
+        return flag;
+    }
 
     public EnemyTank(int x, int y) {
         super(x, y);
@@ -401,9 +442,12 @@ class EnemyTank extends Tank implements Runnable {
     private void moveTank() {
         switch (direct) {
             case 0:
-                for (int i = 0; i < 10; i++) {
-                    if (y > 0) {
+                for (int i = 0; i < 30; i++) {
+                    if (y > 0 && !isEnemyTanksTouch()) {
                         y -= speed;
+                    } else {
+                        y++;
+                        break;
                     }
                     try {
                         Thread.sleep(this.getRandomInt(100, 200));
@@ -413,9 +457,12 @@ class EnemyTank extends Tank implements Runnable {
                 }
                 break;
             case 1:
-                for (int i = 0; i < 10; i++) {
-                    if (x < 400) {
+                for (int i = 0; i < 30; i++) {
+                    if (x < 400 && !isEnemyTanksTouch()) {
                         x += speed;
+                    } else {
+                        x--;
+                        break;
                     }
                     try {
                         Thread.sleep(this.getRandomInt(100, 200));
@@ -425,9 +472,12 @@ class EnemyTank extends Tank implements Runnable {
                 }
                 break;
             case 2:
-                for (int i = 0; i < 10; i++) {
-                    if (y < 300) {
+                for (int i = 0; i < 30; i++) {
+                    if (y < 300 && !isEnemyTanksTouch()) {
                         y += speed;
+                    } else {
+                        y--;
+                        break;
                     }
                     try {
                         Thread.sleep(this.getRandomInt(100, 200));
@@ -437,9 +487,12 @@ class EnemyTank extends Tank implements Runnable {
                 }
                 break;
             case 3:
-                for (int i = 0; i < 10; i++) {
-                    if (x > 0) {
+                for (int i = 0; i < 30; i++) {
+                    if (x > 0 && !isEnemyTanksTouch()) {
                         x -= speed;
+                    } else {
+                        x++;
+                        break;
                     }
                     try {
                         Thread.sleep(this.getRandomInt(100, 200));
