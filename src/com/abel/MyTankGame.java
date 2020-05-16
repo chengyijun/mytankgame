@@ -13,7 +13,7 @@ class GameConfig {
     static int BullerSpeed = 5;
     static int MyTankSpeed = 2;
     static int MyTankBullerNumber = 5;
-    static int EnemyTankNumber = 5;
+    static int EnemyTankNumber = 10;
     static int EnemyTankSpeed = 1;
     static int EnemyTankBullerNumber = 3;
 }
@@ -73,21 +73,17 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
     public void paint(Graphics g) {
         super.paint(g);
         // 绘制我的坦克
-        if (myTank.isAlive) {
-            drawTank(myTank.x, myTank.y, myTank.direct, myTank.kind, g);
-        }
+        drawMyTank(g);
         // 绘制我的子弹
-        for (int i = 0; i < myBullers.size(); i++) {
-            Buller myBuller = myBullers.get(i);
-            if (myBuller.isAlive) {
-                // 子弹还活着就绘制
-                g.drawRect(myBuller.x, myBuller.y, 1, 1);
-            } else {
-                // 子弹死亡了 就从子弹向量移除
-                myBullers.remove(myBuller);
-            }
-        }
-        // 绘制敌人的坦克
+        drawMyTankBuller(g);
+        // 绘制敌人的坦克和敌人坦克的子弹
+        drawEnemyTankAndBuller(g);
+        // 绘制炸弹
+        showBomb(g, bomb);
+
+    }
+
+    private void drawEnemyTankAndBuller(Graphics g) {
         for (int i = 0; i < ets.size(); i++) {
             EnemyTank et = ets.get(i);
             if (et.isAlive) {
@@ -108,10 +104,25 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
                 ets.remove(et);
             }
         }
+    }
 
-        // 绘制炸弹
-        showBomb(g, bomb);
+    private void drawMyTankBuller(Graphics g) {
+        for (int i = 0; i < myBullers.size(); i++) {
+            Buller myBuller = myBullers.get(i);
+            if (myBuller.isAlive) {
+                // 子弹还活着就绘制
+                g.drawRect(myBuller.x, myBuller.y, 1, 1);
+            } else {
+                // 子弹死亡了 就从子弹向量移除
+                myBullers.remove(myBuller);
+            }
+        }
+    }
 
+    private void drawMyTank(Graphics g) {
+        if (myTank.isAlive) {
+            drawTank(myTank.x, myTank.y, myTank.direct, myTank.kind, g);
+        }
     }
 
     private void showBomb(Graphics g, Bomb bomb) {
@@ -194,7 +205,7 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
         // 通过按j键 我的坦克发射子弹
         if (e.getKeyChar() == 'j' && myBullers.size() < GameConfig.MyTankBullerNumber) {
             // 发射子弹
-            System.out.println("发射子弹");
+//            System.out.println("发射子弹");
             // 创建我的子弹
             Buller myBuller = null;
             switch (myTank.direct) {
@@ -532,7 +543,7 @@ class Bomb implements Runnable {
             }
             // 炸弹生命流失 便于绘制不同图片 表示炸弹爆炸过程
             lifeDown();
-            System.out.println("炸弹剩余生命" + leftLife);
+//            System.out.println("炸弹剩余生命" + leftLife);
 
             // 退出线程条件  炸弹死亡
             if (!isAlive) {
