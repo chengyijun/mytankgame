@@ -1,8 +1,32 @@
+/**
+ * 功能:坦克游戏的5.0[]
+ * 1.画出坦克.
+ * 2.我的坦克可以上下左右移动
+ * 3.可以发射子弹,子弹连发(最多5)
+ * 4.当我的坦克击中敌人坦克时，敌人就消失(爆炸的效果)
+ * 5.我被击中后，显示爆炸效果
+ * 6.防止敌人坦克重叠运动(*)
+ * 6.1决定把判断是否碰撞的函数写到EnemyTank类
+ * 7.可以分关(*)
+ * 7.1做一个开始的Panle,它是一个空的
+ * 7.2闪烁效果
+ * 8.可以在玩游戏的时候暂停和继续（*）
+ * 8.1当用户点击暂停时，子弹的速度和坦克速度设为0,并让坦克的方向不要变化
+ * 9.可以记录玩家的成绩（*）
+ * 9.1用文件流.
+ * 9.2单写一个记录类，完成对玩家记录
+ * 9.3先完成保存共击毁了多少辆敌人坦克的功能.
+ * 9.4存盘退出游戏,可以记录当时的敌人坦克坐标，并可以恢复
+ * 10.java如何操作声音文件（*）
+ * 10.1对声音文件的操作
+ */
 package com.abel;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
@@ -18,26 +42,97 @@ class GameConfig {
     static int EnemyTankBullerNumber = 3;
 }
 
-public class MyTankGame extends JFrame {
+public class MyTankGame extends JFrame implements ActionListener {
+    // 游戏面板
     MyPanel myPanel = null;
+    // 关卡信息面板
+    StagePanel stagePanel = null;
+    // 菜单栏
+    JMenuBar jMenuBar = null;
+    // 菜单
+    JMenu jMenu = null;
+    // 菜单项
+    JMenuItem jMenuItemExit = null;
+    JMenuItem jMenuItemNewGame = null;
+
 
     public static void main(String[] args) {
         MyTankGame myTankGame = new MyTankGame();
     }
 
     public MyTankGame() throws HeadlessException {
-        myPanel = new MyPanel();
-        // 启动myPanel线程
-        Thread t = new Thread(myPanel);
+
+        // 创建菜单
+        jMenuBar = new JMenuBar();
+        jMenu = new JMenu("游戏");
+        jMenuItemExit = new JMenuItem("退出");
+        jMenuItemNewGame = new JMenuItem("新游戏");
+        jMenuBar.add(jMenu);
+        jMenu.add(jMenuItemNewGame);
+        jMenu.add(jMenuItemExit);
+        this.setJMenuBar(jMenuBar);
+        // 菜单监听
+        jMenuItemExit.addActionListener(this);
+        jMenuItemExit.setActionCommand("exit");
+        jMenuItemNewGame.addActionListener(this);
+        jMenuItemNewGame.setActionCommand("newgame");
+
+
+        // 创建关卡信息面板
+        createStagePanel();
+    }
+
+    /**
+     * 创建关卡信息面板
+     */
+    private void createStagePanel() {
+        stagePanel = new StagePanel();
+        Thread t = new Thread(stagePanel);
         t.start();
-        this.add(myPanel);
-        // 注册监听
-        this.addKeyListener(myPanel);
+        this.add(stagePanel);
+        panelConfig();
+    }
+
+    /**
+     * 面板的基本参数
+     */
+    private void panelConfig() {
         this.setTitle("我的坦克大战游戏");
         this.setSize(400, 300);
         this.setLocation(700, 400);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setVisible(true);
+    }
+
+    /**
+     * 创建游戏面板
+     */
+    private void createGamePanel() {
+        // 创建游戏面板
+        myPanel = new MyPanel();
+        // 启动myPanel线程
+        Thread t = new Thread(myPanel);
+        t.start();
+        // 注册监听
+        this.addKeyListener(myPanel);
+        // 移除关卡信息面板
+        this.remove(stagePanel);
+        this.add(myPanel);
+
+        panelConfig();
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        switch (e.getActionCommand()) {
+            case "exit":
+                System.exit(0);
+                break;
+            case "newgame":
+                System.out.println("newgame");
+                createGamePanel();
+                break;
+        }
     }
 }
 
@@ -84,6 +179,11 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
 
     }
 
+    /**
+     * 画出敌人的坦克和敌人的坦克子弹
+     *
+     * @param g
+     */
     private void drawEnemyTankAndBuller(Graphics g) {
         for (int i = 0; i < ets.size(); i++) {
             EnemyTank et = ets.get(i);
@@ -107,6 +207,11 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
         }
     }
 
+    /**
+     * 画出我的坦克子弹
+     *
+     * @param g
+     */
     private void drawMyTankBuller(Graphics g) {
         for (int i = 0; i < myBullers.size(); i++) {
             Buller myBuller = myBullers.get(i);
@@ -120,12 +225,23 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
         }
     }
 
+    /**
+     * 画出我的坦克
+     *
+     * @param g
+     */
     private void drawMyTank(Graphics g) {
         if (myTank.isAlive) {
             drawTank(myTank.x, myTank.y, myTank.direct, myTank.kind, g);
         }
     }
 
+    /**
+     * 画出炸弹
+     *
+     * @param g
+     * @param bomb
+     */
     private void showBomb(Graphics g, Bomb bomb) {
         if (bomb == null || !bomb.isAlive) {
             return;
@@ -154,6 +270,8 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
     }
 
     /**
+     * 画坦克基本方法
+     *
      * @param x      int 坦克横坐标
      * @param y      int 坦克纵坐标
      * @param direct int 坦克的方向
@@ -233,6 +351,11 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
         this.repaint();
     }
 
+    /**
+     * 根据按键监听 移动我的坦克
+     *
+     * @param e
+     */
     private void moveMyTankByPress(KeyEvent e) {
         switch (e.getKeyCode()) {
             case 38:
@@ -303,7 +426,9 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
         }
     }
 
-
+    /**
+     * 检测我的子弹是否击中敌人的坦克
+     */
     private void hitEnemyTank() {
         for (int i = 0; i < myBullers.size(); i++) {
             Buller buller = myBullers.get(i);
@@ -324,6 +449,8 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
             }
         }
     }
+
+
 }
 
 class Tank {
@@ -353,10 +480,20 @@ class EnemyTank extends Tank implements Runnable {
     Vector<Buller> bullers = null;
     Vector<EnemyTank> ets = null;
 
+    /**
+     * 使敌人坦克类 获取mypanel上的所有敌人坦克
+     *
+     * @param ets
+     */
     public void setEts(Vector<EnemyTank> ets) {
         this.ets = ets;
     }
 
+    /**
+     * 检测敌人的坦克是否相互碰撞
+     *
+     * @return
+     */
     private boolean isEnemyTanksTouch() {
         boolean flag = false;
 
@@ -374,7 +511,7 @@ class EnemyTank extends Tank implements Runnable {
     }
 
     /**
-     * 两个坦克是否碰撞检测
+     * 两个坦克是否碰撞检测 基本方法
      *
      * @param tankA
      * @param tankB
@@ -386,8 +523,6 @@ class EnemyTank extends Tank implements Runnable {
         Rectangle rectB = new Rectangle(tankB.x, tankB.y, 20, 20);
         if (rectA.intersects(rectB)) {
             flag = true;
-            System.out.println("碰到了");
-//            tankA.direct = 3 - tankA.direct;
         }
         return flag;
     }
@@ -416,6 +551,9 @@ class EnemyTank extends Tank implements Runnable {
         }
     }
 
+    /**
+     * 让敌人的坦克发射子弹
+     */
     private void launchBuller() {
         if (bullers.size() < GameConfig.EnemyTankBullerNumber) {
             Buller buller = null;
@@ -439,6 +577,9 @@ class EnemyTank extends Tank implements Runnable {
         }
     }
 
+    /**
+     * 自动移动敌人的坦克
+     */
     private void moveTank() {
         switch (direct) {
             case 0:
@@ -548,12 +689,18 @@ class Buller implements Runnable {
         }
     }
 
+    /**
+     * 检测子弹是否到达边界
+     */
     private void isBullerHitBorder() {
         if (this.x <= 0 || this.x >= 400 || this.y <= 0 || this.y >= 300) {
             this.isAlive = false;
         }
     }
 
+    /**
+     * 使子弹自动移动
+     */
     private void moveBuller() {
         switch (direct) {
             case 0:
@@ -612,11 +759,50 @@ class Bomb implements Runnable {
 
     }
 
+    /**
+     * 使炸弹生命流失
+     */
     private void lifeDown() {
         if (leftLife > 0) {
             leftLife--;
         } else {
             isAlive = false;
+        }
+    }
+}
+
+class StagePanel extends JPanel implements Runnable {
+    int num = 0;
+
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+        // 画出关卡提示信息
+        if (num % 2 == 0) {
+            drawStageMessage(g);
+        }
+    }
+
+    private void drawStageMessage(Graphics g) {
+        g.setColor(Color.red);
+        g.setFont(new Font("黑体", Font.BOLD, 40));
+        g.drawString("Stage 1", 130, 130);
+    }
+
+    @Override
+    public void run() {
+        while (true) {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            num++;
+            repaint();
+            // 退出线程
+            if (false) {
+                break;
+            }
         }
     }
 }
