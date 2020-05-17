@@ -29,19 +29,73 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Vector;
 
 class GameConfig {
+    // 子弹的速度
     static int BullerSpeed = 5;
+    // 我的坦克速度
     static int MyTankSpeed = 2;
+    // 我的坦克最多连发子弹数量
     static int MyTankBullerNumber = 5;
+    // 敌人的坦克数量
     static int EnemyTankNumber = 7;
+    // 敌人的坦克速度
     static int EnemyTankSpeed = 1;
+    // 敌人的坦克最多连发子弹数量
     static int EnemyTankBullerNumber = 3;
-
+    // 是否开启敌人坦克自动随机转向
     static boolean isEnemyTankGetRandomDirect = true;
+    // 获取游戏面板上敌人坦克向量
+    static Vector<EnemyTank> ets = null;
+
+    // 记录游戏面板上的坦克信息到文件中
+    public static void recordEnemyTanks2File() {
+        File file = new File("record.txt");
+        FileWriter fw = null;
+        BufferedWriter bw = null;
+
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            String locationInfo = null;
+            fw = new FileWriter(file);
+            bw = new BufferedWriter(fw);
+            for (int i = 0; i < ets.size(); i++) {
+                EnemyTank et = ets.get(i);
+                if (!et.isAlive) {
+                    continue;
+                }
+                locationInfo = et.x + "," + et.y + "," + et.direct + "\r\n";
+                bw.write(locationInfo);
+                bw.flush();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                bw.close();
+                fw.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // 设置游戏面板上的敌人坦克向量给GameConfig类
+    public static void setEts(Vector<EnemyTank> ets) {
+        GameConfig.ets = ets;
+    }
+
 
     public static void setIsEnemyTankGetRandomDirect(boolean isEnemyTankGetRandomDirect) {
         GameConfig.isEnemyTankGetRandomDirect = isEnemyTankGetRandomDirect;
@@ -76,6 +130,7 @@ public class MyTankGame extends JFrame implements ActionListener {
     JMenuItem jMenuItemNewGame = null;
     JMenuItem jMenuItemPauseGame = null;
     JMenuItem jMenuItemContinueGame = null;
+    JMenuItem jMenuItemSaveOnExit = null;
 
 
     public static void main(String[] args) {
@@ -90,11 +145,13 @@ public class MyTankGame extends JFrame implements ActionListener {
         jMenuItemNewGame = new JMenuItem("新游戏");
         jMenuItemPauseGame = new JMenuItem("暂停游戏");
         jMenuItemContinueGame = new JMenuItem("继续游戏");
+        jMenuItemSaveOnExit = new JMenuItem("存盘退出");
         jMenuItemExit = new JMenuItem("退出");
         jMenuBar.add(jMenu);
         jMenu.add(jMenuItemNewGame);
         jMenu.add(jMenuItemPauseGame);
         jMenu.add(jMenuItemContinueGame);
+        jMenu.add(jMenuItemSaveOnExit);
         jMenu.add(jMenuItemExit);
         this.setJMenuBar(jMenuBar);
         // 菜单监听
@@ -106,6 +163,8 @@ public class MyTankGame extends JFrame implements ActionListener {
         jMenuItemPauseGame.setActionCommand("pausegame");
         jMenuItemContinueGame.addActionListener(this);
         jMenuItemContinueGame.setActionCommand("continuegame");
+        jMenuItemSaveOnExit.addActionListener(this);
+        jMenuItemSaveOnExit.setActionCommand("saveonexit");
 
 
         // 创建关卡信息面板
@@ -172,6 +231,12 @@ public class MyTankGame extends JFrame implements ActionListener {
                 GameConfig.setEnemyTankSpeed(1);
                 GameConfig.setMyTankSpeed(2);
                 GameConfig.setIsEnemyTankGetRandomDirect(true);
+                break;
+            case "saveonexit":
+                System.out.println("存盘退出");
+                GameConfig.setEts(myPanel.ets);
+                GameConfig.recordEnemyTanks2File();
+                System.exit(0);
                 break;
         }
     }
