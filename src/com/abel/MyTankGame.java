@@ -37,7 +37,7 @@ class GameConfig {
     static int BullerSpeed = 5;
     static int MyTankSpeed = 2;
     static int MyTankBullerNumber = 5;
-    static int EnemyTankNumber = 10;
+    static int EnemyTankNumber = 7;
     static int EnemyTankSpeed = 1;
     static int EnemyTankBullerNumber = 3;
 
@@ -154,11 +154,9 @@ public class MyTankGame extends JFrame implements ActionListener {
                 System.exit(0);
                 break;
             case "newgame":
-                System.out.println("newgame");
                 createGamePanel();
                 break;
             case "pausegame":
-                System.out.println("pausegame");
                 GameConfig.setBullerSpeed(0);
                 GameConfig.setEnemyTankSpeed(0);
                 GameConfig.setMyTankSpeed(0);
@@ -181,7 +179,7 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
     Bomb bomb = null;
 
     public MyPanel() {
-        this.setBackground(Color.black);
+//        this.setBackground(Color.black);
         // 初始化我的坦克
         myTank = new MyTank(180, 220);
         // 初始化我的子弹
@@ -200,6 +198,9 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
     @Override
     public void paint(Graphics g) {
         super.paint(g);
+        // 绘制游戏背景
+        g.setColor(Color.black);
+        g.fillRect(0, 0, 400, 300);
         // 绘制我的坦克
         drawMyTank(g);
         // 绘制我的子弹
@@ -400,13 +401,13 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
                 break;
             case 39:
                 myTank.direct = 1;
-                if (myTank.x < 360) {
+                if (myTank.x < 380) {
                     myTank.x++;
                 }
                 break;
             case 40:
                 myTank.direct = 2;
-                if (myTank.y < 240) {
+                if (myTank.y < 280) {
                     myTank.y++;
                 }
                 break;
@@ -593,7 +594,7 @@ class EnemyTank extends Tank implements Runnable {
      * 让敌人的坦克发射子弹
      */
     private void launchBuller() {
-        if (bullers.size() < GameConfig.EnemyTankBullerNumber) {
+        if (bullers.size() < GameConfig.EnemyTankBullerNumber && GameConfig.BullerSpeed != 0) {
             Buller buller = null;
             switch (direct) {
                 case 0:
@@ -639,7 +640,7 @@ class EnemyTank extends Tank implements Runnable {
                 break;
             case 1:
                 for (int i = 0; i < 30; i++) {
-                    if (x < 400 && !isEnemyTanksTouch()) {
+                    if (x < 380 && !isEnemyTanksTouch()) {
                         x += speed;
                     } else {
                         x--;
@@ -654,7 +655,7 @@ class EnemyTank extends Tank implements Runnable {
                 break;
             case 2:
                 for (int i = 0; i < 30; i++) {
-                    if (y < 300 && !isEnemyTanksTouch()) {
+                    if (y < 280 && !isEnemyTanksTouch()) {
                         y += speed;
                     } else {
                         y--;
