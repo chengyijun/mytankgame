@@ -29,11 +29,22 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.Vector;
+
+
+class Node {
+    int x;
+    int y;
+    int direct;
+
+    public Node(int x, int y, int direct) {
+        this.x = x;
+        this.y = y;
+        this.direct = direct;
+    }
+
+}
 
 class GameConfig {
     // 子弹的速度
@@ -52,6 +63,39 @@ class GameConfig {
     static boolean isEnemyTankGetRandomDirect = true;
     // 获取游戏面板上敌人坦克向量
     static Vector<EnemyTank> ets = null;
+    // 从文件中读出上一局保存的敌人坦克信息并记录在nodes中
+    static Vector<Node> nodes = new Vector<>();
+
+    // 读出上一局保存的敌人坦克文件信息
+    public static Vector<Node> readEnemyTanksFile() {
+        File file = new File("record.txt");
+        FileReader fr = null;
+        BufferedReader br = null;
+        String info = null;
+        String[] infos = null;
+        Node node = null;
+        try {
+
+            fr = new FileReader(file);
+            br = new BufferedReader(fr);
+            while ((info = br.readLine()) != null) {
+                infos = info.split(",");
+                node = new Node(Integer.parseInt(infos[0]), Integer.parseInt(infos[1]), Integer.parseInt(infos[2]));
+                nodes.add(node);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                br.close();
+                fr.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return nodes;
+    }
 
     // 记录游戏面板上的坦克信息到文件中
     public static void recordEnemyTanks2File() {
@@ -131,6 +175,7 @@ public class MyTankGame extends JFrame implements ActionListener {
     JMenuItem jMenuItemPauseGame = null;
     JMenuItem jMenuItemContinueGame = null;
     JMenuItem jMenuItemSaveOnExit = null;
+    JMenuItem jMenuItemLoadLastGame = null;
 
 
     public static void main(String[] args) {
@@ -146,12 +191,14 @@ public class MyTankGame extends JFrame implements ActionListener {
         jMenuItemPauseGame = new JMenuItem("暂停游戏");
         jMenuItemContinueGame = new JMenuItem("继续游戏");
         jMenuItemSaveOnExit = new JMenuItem("存盘退出");
+        jMenuItemLoadLastGame = new JMenuItem("继续上一局");
         jMenuItemExit = new JMenuItem("退出");
         jMenuBar.add(jMenu);
         jMenu.add(jMenuItemNewGame);
         jMenu.add(jMenuItemPauseGame);
         jMenu.add(jMenuItemContinueGame);
         jMenu.add(jMenuItemSaveOnExit);
+        jMenu.add(jMenuItemLoadLastGame);
         jMenu.add(jMenuItemExit);
         this.setJMenuBar(jMenuBar);
         // 菜单监听
@@ -165,6 +212,8 @@ public class MyTankGame extends JFrame implements ActionListener {
         jMenuItemContinueGame.setActionCommand("continuegame");
         jMenuItemSaveOnExit.addActionListener(this);
         jMenuItemSaveOnExit.setActionCommand("saveonexit");
+        jMenuItemLoadLastGame.addActionListener(this);
+        jMenuItemLoadLastGame.setActionCommand("loadlastgame");
 
 
         // 创建关卡信息面板
@@ -211,6 +260,21 @@ public class MyTankGame extends JFrame implements ActionListener {
         panelConfig();
     }
 
+    private void loadLastGame() {
+        // 创建游戏面板
+        myPanel = new MyPanel(true);
+        // 启动myPanel线程
+        Thread t = new Thread(myPanel);
+        t.start();
+        // 注册监听
+        this.addKeyListener(myPanel);
+        // 移除关卡信息面板
+        this.remove(stagePanel);
+        this.add(myPanel);
+
+        panelConfig();
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         switch (e.getActionCommand()) {
@@ -238,6 +302,11 @@ public class MyTankGame extends JFrame implements ActionListener {
                 GameConfig.recordEnemyTanks2File();
                 System.exit(0);
                 break;
+            case "loadlastgame":
+                System.out.println("继续上一局");
+                loadLastGame();
+                break;
+
         }
     }
 }
@@ -264,6 +333,26 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
         ets = new Vector<EnemyTank>();
         for (int i = 0; i < etsSize; i++) {
             EnemyTank et = new EnemyTank((i + 1) * 50, 10);
+            Thread t = new Thread(et);
+            t.start();
+            ets.add(et);
+            et.setEts(ets);
+        }
+    }
+
+    public MyPanel(boolean isLoadLastGame) {
+//        this.setBackground(Color.black);
+        // 初始化我的坦克
+        myTank = new MyTank(180, 220);
+        // 初始化我的子弹
+        myBullers = new Vector<Buller>();
+        // 初始化敌人的坦克
+        ets = new Vector<EnemyTank>();
+        Vector<Node> nodes = GameConfig.readEnemyTanksFile();
+        for (int i = 0; i < nodes.size(); i++) {
+            Node node = nodes.get(i);
+            EnemyTank et = new EnemyTank(node.x, node.y);
+            et.direct = node.direct;
             Thread t = new Thread(et);
             t.start();
             ets.add(et);
