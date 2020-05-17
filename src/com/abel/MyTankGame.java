@@ -256,8 +256,16 @@ public class MyTankGame extends JFrame implements ActionListener {
         // 移除关卡信息面板
         this.remove(stagePanel);
         this.add(myPanel);
+        // 播放游戏BGM
+        playGameBgm();
 
         panelConfig();
+    }
+
+    private void playGameBgm() {
+        InputStream input = getClass().getResourceAsStream("/music/bgm.mp3"); //音频存放在src下
+        Music music = new Music(input);
+        music.start();
     }
 
     private void loadLastGame() {
