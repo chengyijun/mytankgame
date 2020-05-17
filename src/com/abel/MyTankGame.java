@@ -75,6 +75,7 @@ public class MyTankGame extends JFrame implements ActionListener {
     JMenuItem jMenuItemExit = null;
     JMenuItem jMenuItemNewGame = null;
     JMenuItem jMenuItemPauseGame = null;
+    JMenuItem jMenuItemContinueGame = null;
 
 
     public static void main(String[] args) {
@@ -88,10 +89,12 @@ public class MyTankGame extends JFrame implements ActionListener {
         jMenu = new JMenu("游戏");
         jMenuItemNewGame = new JMenuItem("新游戏");
         jMenuItemPauseGame = new JMenuItem("暂停游戏");
+        jMenuItemContinueGame = new JMenuItem("继续游戏");
         jMenuItemExit = new JMenuItem("退出");
         jMenuBar.add(jMenu);
         jMenu.add(jMenuItemNewGame);
         jMenu.add(jMenuItemPauseGame);
+        jMenu.add(jMenuItemContinueGame);
         jMenu.add(jMenuItemExit);
         this.setJMenuBar(jMenuBar);
         // 菜单监听
@@ -101,6 +104,8 @@ public class MyTankGame extends JFrame implements ActionListener {
         jMenuItemNewGame.setActionCommand("newgame");
         jMenuItemPauseGame.addActionListener(this);
         jMenuItemPauseGame.setActionCommand("pausegame");
+        jMenuItemContinueGame.addActionListener(this);
+        jMenuItemContinueGame.setActionCommand("continuegame");
 
 
         // 创建关卡信息面板
@@ -161,6 +166,12 @@ public class MyTankGame extends JFrame implements ActionListener {
                 GameConfig.setEnemyTankSpeed(0);
                 GameConfig.setMyTankSpeed(0);
                 GameConfig.setIsEnemyTankGetRandomDirect(false);
+                break;
+            case "continuegame":
+                GameConfig.setBullerSpeed(5);
+                GameConfig.setEnemyTankSpeed(1);
+                GameConfig.setMyTankSpeed(2);
+                GameConfig.setIsEnemyTankGetRandomDirect(true);
                 break;
         }
     }
