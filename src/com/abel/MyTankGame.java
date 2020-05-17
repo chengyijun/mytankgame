@@ -123,7 +123,7 @@ public class MyTankGame extends JFrame implements ActionListener {
      */
     private void panelConfig() {
         this.setTitle("我的坦克大战游戏");
-        this.setSize(400, 300);
+        this.setSize(600, 500);
         this.setLocation(700, 400);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setVisible(true);
@@ -447,14 +447,37 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            // 检测敌人坦克的子弹是否击中了我的坦克
+            isEnemyHitMyTank();
             // 检测我的坦克子弹是否击中敌人的坦克
             hitEnemyTank();
-
             // 持续重绘面板 使敌人坦克和子弹运动起来
             this.repaint();
             // 退出线程条件 我的坦克死亡 游戏结束
             if (!myTank.isAlive) {
                 break;
+            }
+        }
+    }
+
+    private void isEnemyHitMyTank() {
+        for (int i = 0; i < ets.size(); i++) {
+            EnemyTank et = ets.get(i);
+            Vector<Buller> etBullers = et.bullers;
+            for (int j = 0; j < etBullers.size(); j++) {
+                Buller etBuller = etBullers.get(j);
+                if (isShot(etBuller, myTank)) {
+                    // 创建一个炸弹
+                    bomb = new Bomb(myTank.x, myTank.y);
+                    Thread t = new Thread(bomb);
+                    t.start();
+                    // 我的坦克死亡
+                    myTank.isAlive = false;
+                    // 敌人的子弹死亡
+                    etBuller.isAlive = false;
+                    // 敌人的子弹从子弹向量移除
+                    etBullers.remove(etBuller);
+                }
             }
         }
     }
