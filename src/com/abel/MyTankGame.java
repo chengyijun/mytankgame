@@ -32,7 +32,6 @@ import java.awt.event.KeyListener;
 import java.io.*;
 import java.util.Vector;
 
-
 class Node {
     int x;
     int y;
@@ -43,7 +42,6 @@ class Node {
         this.y = y;
         this.direct = direct;
     }
-
 }
 
 class GameConfig {
@@ -66,6 +64,25 @@ class GameConfig {
     // 从文件中读出上一局保存的敌人坦克信息并记录在nodes中
     static Vector<Node> nodes = new Vector<>();
 
+    // 得到还活着的敌人坦克数量
+    public static int getAliveEnemyTanksNum() {
+        int num = 0;
+        for (int i = 0; i < ets.size(); i++) {
+            EnemyTank et = ets.get(i);
+            if (et.isAlive) {
+                num++;
+            }
+        }
+        return num;
+    }
+
+    // 得到被击杀的敌人坦克数量
+    public static int getDeadEnemyTanksNum() {
+        int num = 0;
+        num = EnemyTankNumber - getAliveEnemyTanksNum();
+        return num;
+    }
+
     // 读出上一局保存的敌人坦克文件信息
     public static Vector<Node> readEnemyTanksFile() {
         File file = new File("record.txt");
@@ -75,7 +92,6 @@ class GameConfig {
         String[] infos = null;
         Node node = null;
         try {
-
             fr = new FileReader(file);
             br = new BufferedReader(fr);
             while ((info = br.readLine()) != null) {
@@ -93,7 +109,6 @@ class GameConfig {
                 e.printStackTrace();
             }
         }
-
         return nodes;
     }
 
@@ -102,7 +117,6 @@ class GameConfig {
         File file = new File("record.txt");
         FileWriter fw = null;
         BufferedWriter bw = null;
-
         if (!file.exists()) {
             try {
                 file.createNewFile();
@@ -140,11 +154,9 @@ class GameConfig {
         GameConfig.ets = ets;
     }
 
-
     public static void setIsEnemyTankGetRandomDirect(boolean isEnemyTankGetRandomDirect) {
         GameConfig.isEnemyTankGetRandomDirect = isEnemyTankGetRandomDirect;
     }
-
 
     public static void setBullerSpeed(int bullerSpeed) {
         BullerSpeed = bullerSpeed;
@@ -157,7 +169,6 @@ class GameConfig {
     public static void setEnemyTankSpeed(int enemyTankSpeed) {
         EnemyTankSpeed = enemyTankSpeed;
     }
-
 }
 
 public class MyTankGame extends JFrame implements ActionListener {
@@ -177,13 +188,11 @@ public class MyTankGame extends JFrame implements ActionListener {
     JMenuItem jMenuItemSaveOnExit = null;
     JMenuItem jMenuItemLoadLastGame = null;
 
-
     public static void main(String[] args) {
         MyTankGame myTankGame = new MyTankGame();
     }
 
     public MyTankGame() throws HeadlessException {
-
         // 创建菜单
         jMenuBar = new JMenuBar();
         jMenu = new JMenu("游戏");
@@ -214,8 +223,6 @@ public class MyTankGame extends JFrame implements ActionListener {
         jMenuItemSaveOnExit.setActionCommand("saveonexit");
         jMenuItemLoadLastGame.addActionListener(this);
         jMenuItemLoadLastGame.setActionCommand("loadlastgame");
-
-
         // 创建关卡信息面板
         createStagePanel();
     }
@@ -258,7 +265,6 @@ public class MyTankGame extends JFrame implements ActionListener {
         this.add(myPanel);
         // 播放游戏BGM
         playGameBgm();
-
         panelConfig();
     }
 
@@ -279,7 +285,6 @@ public class MyTankGame extends JFrame implements ActionListener {
         // 移除关卡信息面板
         this.remove(stagePanel);
         this.add(myPanel);
-
         panelConfig();
     }
 
@@ -314,7 +319,6 @@ public class MyTankGame extends JFrame implements ActionListener {
                 System.out.println("继续上一局");
                 loadLastGame();
                 break;
-
         }
     }
 }
@@ -382,7 +386,21 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
         drawEnemyTankAndBuller(g);
         // 绘制炸弹
         showBomb(g, bomb);
+        // 绘制面板统计信息
+        drawGameStatisticsInfo(g);
+    }
 
+    private void drawGameStatisticsInfo(Graphics g) {
+        drawTank(60, 320, 0, 1, g);
+        g.setFont(new Font("黑体", Font.BOLD, 20));
+        g.setColor(Color.black);
+        GameConfig.setEts(ets);
+        int aliveEmemyTanks = GameConfig.getAliveEnemyTanksNum();
+        g.drawString(String.valueOf(aliveEmemyTanks), 80, 335);
+        drawTank(160, 320, 0, 0, g);
+        g.setFont(new Font("黑体", Font.BOLD, 20));
+        g.setColor(Color.black);
+        g.drawString(" x 1", 180, 335);
     }
 
     /**
@@ -465,7 +483,6 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         if (bomb.leftLife > 6) {
             g.drawImage(image1, bomb.x, bomb.y, this);
         } else if (bomb.leftLife > 3) {
@@ -564,7 +581,7 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
      */
     private void moveMyTankByPress(KeyEvent e) {
         switch (e.getKeyCode()) {
-            case 38:
+            case 87:
                 // 设置我的坦克方向向上
                 myTank.direct = 0;
                 // 移动坦克
@@ -572,19 +589,19 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
                     myTank.y--;
                 }
                 break;
-            case 39:
+            case 68:
                 myTank.direct = 1;
                 if (myTank.x < 380) {
                     myTank.x++;
                 }
                 break;
-            case 40:
+            case 83:
                 myTank.direct = 2;
                 if (myTank.y < 280) {
                     myTank.y++;
                 }
                 break;
-            case 37:
+            case 65:
                 myTank.direct = 3;
                 if (myTank.x > 0) {
                     myTank.x--;
@@ -678,8 +695,6 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
             }
         }
     }
-
-
 }
 
 class Tank {
@@ -725,7 +740,6 @@ class EnemyTank extends Tank implements Runnable {
      */
     private boolean isEnemyTanksTouch() {
         boolean flag = false;
-
         for (int i = 0; i < ets.size(); i++) {
             EnemyTank et = ets.get(i);
             if (et != this && et.isAlive) {
@@ -735,7 +749,6 @@ class EnemyTank extends Tank implements Runnable {
                 }
             }
         }
-
         return flag;
     }
 
@@ -978,7 +991,6 @@ class Bomb implements Runnable {
         this.y = y;
     }
 
-
     @Override
     public void run() {
         while (true) {
@@ -990,13 +1002,11 @@ class Bomb implements Runnable {
             // 炸弹生命流失 便于绘制不同图片 表示炸弹爆炸过程
             lifeDown();
 //            System.out.println("炸弹剩余生命" + leftLife);
-
             // 退出线程条件  炸弹死亡
             if (!isAlive) {
                 break;
             }
         }
-
     }
 
     /**
