@@ -470,9 +470,12 @@ class MyPanel extends JPanel implements KeyListener, Runnable {
         if (bomb == null || !bomb.isAlive) {
             return;
         }
-        File file1 = new File("1.png");
-        File file2 = new File("2.png");
-        File file3 = new File("3.png");
+//        File file1 = new File("/images/1.png");
+//        File file2 = new File("/images/2.png");
+//        File file3 = new File("/images/3.png");
+        InputStream file1 = getClass().getResourceAsStream("/images/bomb/1.png"); //音频存放在src下
+        InputStream file2 = getClass().getResourceAsStream("/images/bomb/2.png"); //音频存放在src下
+        InputStream file3 = getClass().getResourceAsStream("/images/bomb/3.png"); //音频存放在src下
         Image image1 = null;
         Image image2 = null;
         Image image3 = null;
